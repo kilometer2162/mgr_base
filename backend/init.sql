@@ -217,6 +217,100 @@ VALUES
   (1, 12)
 ON DUPLICATE KEY UPDATE `role_id` = `role_id`;
 
+
+-- 系统参数表
+CREATE TABLE IF NOT EXISTS `configs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) NOT NULL COMMENT '参数键',
+  `value` text COMMENT '参数值',
+  `label` varchar(255) NOT NULL COMMENT '参数标签',
+  `type` varchar(50) NOT NULL DEFAULT 'text' COMMENT '参数类型',
+  `group` varchar(100) NOT NULL DEFAULT 'system' COMMENT '参数分组',
+  `description` text COMMENT '描述',
+  `sort` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态: 1-启用, 0-禁用',
+  `created_at` datetime(3) DEFAULT NULL,
+  `updated_at` datetime(3) DEFAULT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_configs_key` (`key`),
+  KEY `idx_configs_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统参数表';
+
+-- 字典类型表
+CREATE TABLE IF NOT EXISTS `dict_types` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(100) NOT NULL COMMENT '字典类型代码',
+  `name` varchar(255) NOT NULL COMMENT '字典类型名称',
+  `description` text COMMENT '描述',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态: 1-启用, 0-禁用',
+  `created_at` datetime(3) DEFAULT NULL,
+  `updated_at` datetime(3) DEFAULT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_dict_types_code` (`code`),
+  KEY `idx_dict_types_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典类型表';
+
+-- 字典项表
+CREATE TABLE IF NOT EXISTS `dict_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `type_id` bigint unsigned NOT NULL COMMENT '字典类型ID',
+  `label` varchar(255) NOT NULL COMMENT '显示标签',
+  `value` varchar(255) NOT NULL COMMENT '值',
+  `sort` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态: 1-启用, 0-禁用',
+  `description` text COMMENT '描述',
+  `created_at` datetime(3) DEFAULT NULL,
+  `updated_at` datetime(3) DEFAULT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_dict_items_type_value` (`type_id`, `value`),
+  KEY `idx_dict_items_type_id` (`type_id`),
+  KEY `idx_dict_items_deleted_at` (`deleted_at`),
+  CONSTRAINT `fk_dict_items_type` FOREIGN KEY (`type_id`) REFERENCES `dict_types` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典项表';
+
+-- 消息公告表
+CREATE TABLE IF NOT EXISTS `notices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL COMMENT '标题',
+  `content` text COMMENT '内容',
+  `type` varchar(50) NOT NULL DEFAULT 'notice' COMMENT '类型: notice-公告, message-消息',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态: 1-发布, 0-草稿',
+  `priority` int NOT NULL DEFAULT 0 COMMENT '优先级: 0-普通,1-重要,2-紧急',
+  `created_by` bigint unsigned DEFAULT NULL COMMENT '创建人ID',
+  `created_at` datetime(3) DEFAULT NULL,
+  `updated_at` datetime(3) DEFAULT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_notices_type` (`type`),
+  KEY `idx_notices_status` (`status`),
+  KEY `idx_notices_deleted_at` (`deleted_at`),
+  KEY `idx_notices_created_by` (`created_by`),
+  CONSTRAINT `fk_notices_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息公告表';
+
+-- 消息阅读记录表
+CREATE TABLE IF NOT EXISTS `notice_reads` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `notice_id` bigint unsigned NOT NULL COMMENT '消息ID',
+  `user_id` bigint unsigned NOT NULL COMMENT '用户ID',
+  `is_read` int NOT NULL DEFAULT 0 COMMENT '是否已读: 1-已读, 0-未读',
+  `read_at` datetime DEFAULT NULL COMMENT '阅读时间',
+  `created_at` datetime(3) DEFAULT NULL,
+  `updated_at` datetime(3) DEFAULT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_notice_reads_unique` (`notice_id`, `user_id`),
+  KEY `idx_notice_reads_notice_id` (`notice_id`),
+  KEY `idx_notice_reads_user_id` (`user_id`),
+  KEY `idx_notice_reads_deleted_at` (`deleted_at`),
+  CONSTRAINT `fk_notice_reads_notice` FOREIGN KEY (`notice_id`) REFERENCES `notices` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notice_reads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息阅读记录表';
+
+
 -- ============================================
 -- 脚本执行完成
 -- ============================================
