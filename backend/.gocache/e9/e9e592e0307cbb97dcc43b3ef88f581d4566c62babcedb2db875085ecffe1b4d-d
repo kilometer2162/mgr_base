@@ -1,0 +1,9 @@
+./config.go
+./dict.go
+./ip_access.go
+./log.go
+./notice.go
+./permission.go
+./resource.go
+./role.go
+./user.go
